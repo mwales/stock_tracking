@@ -1,38 +1,50 @@
 #!/bin/bash
 
 TMP_DIR=/tmp/wwalert
+STORE_NAME="Walmart"
+NUM_SKUS=$#
 
-if [ $# -ne 1 ]; then
-	echo "Must provide a Wal-Mart Item URL"
+if [ $# -lt 1 ]; then
+	echo "Must provide a ${STORE_NAME} Item URL"
 	exit 1
 fi
 
 while :
 do
-	date
-
-	mkdir $TMP_DIR
-	cd $TMP_DIR
-	wget --user-agent="Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)" ${1}
+	for itemUrl in "$@"
+	do
 	
-	oos=$(cat * | grep -c "Get in-stock alert")
+		DATE_STR=$(date)
 
-	cd -
-	rm -rf $TMP_DIR
+		mkdir $TMP_DIR
+		cd $TMP_DIR
+	
+		# echo "Retrieving $itemUrl"
+		wget --user-agent="Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)" ${1} 2> /dev/null
+	
+		oos=$(cat * | grep -c "Get in-stock alert")
 
-	if [ $oos -ne 0 ];
-	then
-		echo "Out of stock..."
-	else
-		echo "In stock"
+		cd - > /dev/null
 
-		for i in {1..5}; do
-			play WalmartAlert.mp3
-		done
-	fi
+		if [ $oos -ne 0 ];
+		then
+			echo "${DATE_STR} ${STORE_NAME} Out of stock of ${itemUrl}"
+		else
+			echo "${DATE_STR} ${STORE_NAME} In stock !!!"
+			echo "BUYBUYBUY ${itemUrl}"
 
+			for i in {1..5}; do
+				play ${STORE_NAME}Alert.mp3 > /dev/null
+			done
+		fi
+		
+		# Sleep for a few seconds before querying the next URL
+		sleep 5
+		rm -rf $TMP_DIR
+	done
+
+	# After querying all the URLs, sleep for 30s
 	sleep 30
-
 
 done
 
