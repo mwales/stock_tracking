@@ -34,7 +34,7 @@ do
 			echo "BUYBUYBUY ${itemUrl}"
 
 			for i in {1..5}; do
-				play ${STORE_NAME}Alert.mp3 > /dev/null
+				play ${STORE_NAME}Alert.mp3 2> /dev/null
 			done
 		fi
 		
