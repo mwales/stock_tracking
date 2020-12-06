@@ -1,7 +1,10 @@
 #!/bin/bash
 
-TMP_DIR=/tmp/wwalert
+TMP_DIR=/tmp/wmalert
 STORE_NAME="Walmart"
+SOLD_OUT_GREP="Get in-stock alert"
+
+
 NUM_SKUS=$#
 
 if [ $# -lt 1 ]; then
@@ -21,23 +24,29 @@ do
 	
 		# echo "Retrieving $itemUrl"
 		wget --user-agent="Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)" ${1} 2> /dev/null
-	
-		oos=$(cat * | grep -c "Get in-stock alert")
 
-		cd - > /dev/null
+		num_files_retrv=$(ls * | wc -l)
 
-		if [ $oos -ne 0 ];
-		then
-			echo "${DATE_STR} ${STORE_NAME} Out of stock of ${itemUrl}"
+		if [[ $num_files_retrv -lt 1 ]]; then
+			echo "${DATE_STR} ${STORE_NAME} Query failed of ${itemUrl}"
 		else
-			echo "${DATE_STR} ${STORE_NAME} In stock !!!"
-			echo "BUYBUYBUY ${itemUrl}"
 
-			for i in {1..5}; do
-				play ${STORE_NAME}Alert.mp3 2> /dev/null
-			done
+			oos=$(cat * | grep -c "$SOLD_OUT_GREP")
+
+			cd - > /dev/null
+
+			if [[ $oos -ne 0 ]]; then
+				echo "${DATE_STR} ${STORE_NAME} Out of stock of ${itemUrl}"
+			else
+				echo "${DATE_STR} ${STORE_NAME} In stock !!!"
+				echo "BUYBUYBUY ${itemUrl}"
+
+				for i in {1..5}; do
+					play ${STORE_NAME}Alert.mp3 2> /dev/null
+				done
+			fi
 		fi
-		
+
 		# Sleep for a few seconds before querying the next URL
 		sleep 5
 		rm -rf $TMP_DIR
